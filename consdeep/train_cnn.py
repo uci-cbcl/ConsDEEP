@@ -21,12 +21,17 @@ DROP_OUT_CNN = 0.1
 DROP_OUT_MLP = 0.1
 ACTIVATION = 'relu'
 BATCH_SIZE = 512
-NB_EPOCH = 50
-LR = 0.01
+NB_EPOCH = 100
+LR = 0.01/2
 
 
 def main():
     save_name = sys.argv[1]
+    nb_filter = int(sys.argv[2])
+    nb_hidden = int(sys.argv[3])
+    dropout_cnn = float(sys.argv[4])
+    dropout_mlp = float(sys.argv[5])
+    filter_len = int(sys.argv[6])
     
     print 'loading data...'
     sys.stdout.flush()
@@ -39,25 +44,25 @@ def main():
     Y_te = np.load('Y_te_float32.npy')
     
     __, seq_len, channel_num = X_tr.shape
-    pool_len = (seq_len-FILTER_LEN+1)/POOL_FACTOR
+    pool_len = (seq_len-filter_len+1)/POOL_FACTOR
     
     model = Sequential()
     
     model.add(Convolution1D(input_dim=channel_num,
                         input_length=seq_len,
-                        nb_filter=NB_FILTER,
+                        nb_filter=nb_filter,
                         border_mode='valid',
-                        filter_length=FILTER_LEN,
+                        filter_length=filter_len,
                         activation=ACTIVATION))
     model.add(MaxPooling1D(pool_length=pool_len, stride=pool_len))
-    model.add(Dropout(DROP_OUT_CNN))
+    model.add(Dropout(dropout_cnn))
     model.add(Flatten())
     
-    model.add(Dense(NB_HIDDEN))
+    model.add(Dense(nb_hidden))
     model.add(Activation('relu'))
-    model.add(Dropout(DROP_OUT_MLP))
+    model.add(Dropout(dropout_mlp))
     
-    model.add(Dense(input_dim=NB_HIDDEN, output_dim=1))
+    model.add(Dense(input_dim=nb_hidden, output_dim=1))
     model.add(Activation('sigmoid'))
 
     adagrad = Adagrad(lr=LR)
@@ -69,7 +74,7 @@ def main():
     model.compile(loss='binary_crossentropy', optimizer=adagrad, class_mode='binary') 
    
     checkpointer = ModelCheckpoint(filepath=save_name+'.hdf5', verbose=1, save_best_only=True)
-#    earlystopper = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
+    earlystopper = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
 
     outmodel = open(save_name+'.json', 'w')
     outmodel.write(model.to_json())
@@ -81,7 +86,7 @@ def main():
     time_start = time.time()
     model.fit(X_tr, Y_tr, batch_size=BATCH_SIZE, nb_epoch=NB_EPOCH, 
               show_accuracy=True, validation_data=(X_va, Y_va),
-              callbacks=[checkpointer])
+              callbacks=[checkpointer, earlystopper])
     time_end = time.time()
     
     model.load_weights(save_name+'.hdf5')
