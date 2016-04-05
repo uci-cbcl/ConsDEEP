@@ -8,19 +8,21 @@ import numpy as np
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.convolutional import Convolution1D, MaxPooling1D
+from keras.optimizers import Adagrad
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 
 np.random.seed(0)
 
-NB_FILTER = 300
-NB_HIDDEN = 300
-FILTER_LEN = 20
+NB_FILTER = 200
+NB_HIDDEN = 200
+FILTER_LEN = 5
 POOL_FACTOR = 1
 DROP_OUT_CNN = 0.1
 DROP_OUT_MLP = 0.1
 ACTIVATION = 'relu'
-BATCH_SIZE = 1024
-NB_EPOCH = 30
+BATCH_SIZE = 512
+NB_EPOCH = 50
+LR = 0.01
 
 
 def main():
@@ -58,12 +60,14 @@ def main():
     model.add(Dense(input_dim=NB_HIDDEN, output_dim=1))
     model.add(Activation('sigmoid'))
 
+    adagrad = Adagrad(lr=LR)
  
     print 'model compiling...'
     sys.stdout.flush()
      
-    model.compile(loss='binary_crossentropy', optimizer='adagrad', class_mode='binary')
-    
+#    model.compile(loss='binary_crossentropy', optimizer='adagrad', class_mode='binary')
+    model.compile(loss='binary_crossentropy', optimizer=adagrad, class_mode='binary') 
+   
     checkpointer = ModelCheckpoint(filepath=save_name+'.hdf5', verbose=1, save_best_only=True)
 #    earlystopper = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
 
