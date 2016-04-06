@@ -17,7 +17,7 @@ def main():
         
         print seq
     
-    infile.close()
+    inbed.close()
     infasta.close()
     
     
