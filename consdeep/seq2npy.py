@@ -27,6 +27,7 @@ def main():
         
         if i%10000 == 0:
             print '%s/%s lines processed...' % (i, N)
+            sys.stdout.flush()
     
     
     np.save('X_%s_float32.npy' % (base_name), X.astype('float32'))
