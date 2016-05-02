@@ -15,33 +15,34 @@ np.random.seed(0)
 
 NB_FILTER = 200
 NB_HIDDEN = 200
-FILTER_LEN = 5
+FILTER_LEN = 10
 POOL_FACTOR = 1
 DROP_OUT_CNN = 0.1
 DROP_OUT_MLP = 0.1
 ACTIVATION = 'relu'
 BATCH_SIZE = 512
 NB_EPOCH = 100
-LR = 0.01/2
+LR = 0.01
 
 
 def main():
-    save_name = sys.argv[1]
-    nb_filter = int(sys.argv[2])
-    nb_hidden = int(sys.argv[3])
-    dropout_cnn = float(sys.argv[4])
-    dropout_mlp = float(sys.argv[5])
-    filter_len = int(sys.argv[6])
+    base_name = sys.argv[1]
+    save_name = sys.argv[2]
+    nb_filter = int(sys.argv[3])
+    nb_hidden = int(sys.argv[4])
+    dropout_cnn = float(sys.argv[5])
+    dropout_mlp = float(sys.argv[6])
+    filter_len = int(sys.argv[7])
     
     print 'loading data...'
     sys.stdout.flush()
     
-    X_tr = np.load('X_tr_float32.npy')
-    Y_tr = np.load('Y_tr_float32.npy')
-    X_va = np.load('X_va_float32.npy')
-    Y_va = np.load('Y_va_float32.npy')
-    X_te = np.load('X_te_float32.npy')
-    Y_te = np.load('Y_te_float32.npy')
+    X_tr = np.load('X_'+base_name+'_tr_float32.npy')
+    Y_tr = np.load('Y_'+base_name+'_tr_float32.npy')
+    X_va = np.load('X_'+base_name+'_va_float32.npy')
+    Y_va = np.load('Y_'+base_name+'_va_float32.npy')
+    X_te = np.load('X_'+base_name+'_te_float32.npy')
+    Y_te = np.load('Y_'+base_name+'_te_float32.npy')
     
     __, seq_len, channel_num = X_tr.shape
     pool_len = (seq_len-filter_len+1)/POOL_FACTOR
