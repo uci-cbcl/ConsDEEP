@@ -20,7 +20,7 @@ A 0.25000 C 0.25000 G 0.25000 T 0.25000
 
 
 
-def update_counts(counts, n_sites, x, a):
+def update_counts(counts, x, a):
     a_max = a.max(axis=1)
     a_max_idx = a.argmax(axis=1)
     
@@ -31,9 +31,8 @@ def update_counts(counts, n_sites, x, a):
         for j in range(0, nb_filter):
             idx = a_max_idx[i, j]
             counts[j] += a_max[i, j]*x[i, idx:idx+filter_len, :]
-            n_sites[j] += a_max[i, j]
     
-    return (counts, n_sites)
+    return counts
     
 
 
@@ -43,7 +42,7 @@ def main():
     
     base_json = base_name+'.json'
     base_hdf5 = base_name+'.hdf5'
-    base_meme = base_name+'.meme_'
+    base_meme = base_name+'.meme'
     
     model = model_from_json(open(base_json).read())
     model.load_weights(base_hdf5)
@@ -59,8 +58,6 @@ def main():
     
     counts1 = np.zeros((nb_filter1, filter_len1, channel_num))+1e-5
     counts2 = np.zeros((nb_filter2, filter_len2, channel_num))+1e-5
-    n_sites1 = np.zeros(nb_filter1)
-    n_sites2 = np.zeros(nb_filter2)
     
     i = 0
     while i+BATCH_SIZE < N:
@@ -68,8 +65,8 @@ def main():
 
         a1 = f1(x)
         a2 = f2(x)
-        counts1, n_sites1 = update_counts(counts1, n_sites1, x, a1)
-        counts2, n_sites2 = update_counts(counts2, n_sites2, x, a2)
+        counts1 = update_counts(counts1, x, a1)
+        counts2 = update_counts(counts2, x, a2)
         
         i += BATCH_SIZE
         
@@ -80,8 +77,8 @@ def main():
     x = X[i:N]
     a1 = f1(x)
     a2 = f2(x)
-    counts1, n_sites1 = update_counts(counts1, n_sites1, x, a1)
-    counts2, n_sites2 = update_counts(counts2, n_sites2, x, a2)
+    counts1 = update_counts(counts1, x, a1)
+    counts2 = update_counts(counts2, x, a2)
     pwm1 = counts1/counts1.sum(axis=2).reshape(nb_filter1, filter_len1, 1)
     pwm2 = counts2/counts2.sum(axis=2).reshape(nb_filter2, filter_len2, 1)
     
@@ -90,7 +87,7 @@ def main():
     
     for i in range(0, nb_filter1):
         outfile.write('MOTIF FILTER_LEN%s_%s\n\n' % (filter_len1, i))
-        outfile.write('letter-probability matrix: alength= 4 w= %s nsites= %s E= 1e-6\n' % (filter_len1, int(n_sites1[i])))
+        outfile.write('letter-probability matrix: alength= 4\n')
         
         for j in range(0, filter_len1):
             outfile.write('%f\t%f\t%f\t%f\n' % tuple(pwm1[i, j, :].tolist()))
@@ -99,7 +96,7 @@ def main():
         
     for i in range(0, nb_filter2):
         outfile.write('MOTIF FILTER_LEN%s_%s\n\n' % (filter_len2, i))
-        outfile.write('letter-probability matrix: alength= 4 w= %s nsites= %s E= 1e-6\n' % (filter_len2, int(n_sites2[i])))
+        outfile.write('letter-probability matrix: alength= 4\n')
         
         for j in range(0, filter_len2):
             outfile.write('%f\t%f\t%f\t%f\n' % tuple(pwm2[i, j, :].tolist()))

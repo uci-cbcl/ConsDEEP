@@ -20,7 +20,7 @@ A 0.25000 C 0.25000 G 0.25000 T 0.25000
 
 
 
-def update_counts(counts, n_sites, x, a):
+def update_counts(counts, x, a):
     a_max = a.max(axis=1)
     a_max_idx = a.argmax(axis=1)
     
@@ -31,9 +31,8 @@ def update_counts(counts, n_sites, x, a):
         for j in range(0, nb_filter):
             idx = a_max_idx[i, j]
             counts[j] += a_max[i, j]*x[i, idx:idx+filter_len, :]
-            n_sites[j] += a_max[i, j]
     
-    return (counts, n_sites)
+    return counts
     
 
 
@@ -55,13 +54,12 @@ def main():
     f = theano.function([model.get_input()], model.layers[0].get_output())
     
     counts = np.zeros((nb_filter, filter_len, channel_num))+1e-5
-    n_sites = np.zeros(nb_filter)
     
     i = 0
     while i+BATCH_SIZE < N:
         x = X[i:i+BATCH_SIZE]
         a = f(x)
-        counts, n_sites = update_counts(counts, n_sites, x, a)
+        counts = update_counts(counts, x, a)
         
         i += BATCH_SIZE
         
@@ -71,7 +69,7 @@ def main():
     
     x = X[i:N]
     a = f(x)
-    counts, n_sites = update_counts(counts, n_sites, x, a)
+    counts = update_counts(counts, x, a)
     pwm = counts/counts.sum(axis=2).reshape(nb_filter, filter_len, 1)
     
     outfile = open(base_meme, 'w')
@@ -79,7 +77,7 @@ def main():
     
     for i in range(0, nb_filter):
         outfile.write('MOTIF FILTER_%s\n\n' % (i))
-        outfile.write('letter-probability matrix: alength= 4 w= %s nsites= %s E= 1e-6\n' % (filter_len, int(n_sites[i])))
+        outfile.write('letter-probability matrix: alength= 4\n')
         
         for j in range(0, filter_len):
             outfile.write('%f\t%f\t%f\t%f\n' % tuple(pwm[i, j, :].tolist()))
