@@ -43,7 +43,7 @@ def main():
     
     base_json = base_name+'.json'
     base_hdf5 = base_name+'.hdf5'
-    base_meme = base_name+'.meme_'
+    base_meme = base_name+'.meme'
     
     model = model_from_json(open(base_json).read())
     model.load_weights(base_hdf5)
